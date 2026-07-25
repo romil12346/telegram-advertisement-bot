@@ -5,13 +5,37 @@ from telegram.constants import ChatMemberStatus
 from telegram.ext import ContextTypes, ConversationHandler
 from telegram.error import TelegramError
 from .database import now_iso
-from .keyboards import dashboard_keyboard, back_home, cancel_keyboard, ad_actions
+from .keyboards import dashboard_keyboard, back_home, cancel_keyboard, ad_actions, language_keyboard
 from .services import parse_buttons, send_ad, calculate_next_run, referral_code
 
 AD_NAME, AD_CONTENT, AD_BUTTONS, CAMP_INTERVAL, CAMP_CHATS = range(5)
 
 def is_private(update: Update) -> bool:
     return bool(update.effective_chat and update.effective_chat.type == "private")
+
+async def get_language(db, user_id: int) -> str:
+    row = await db.fetchone("SELECT language FROM users WHERE user_id=?", (user_id,))
+    return (row or {}).get("language", "en")
+
+async def dashboard_stats(db, user_id: int) -> dict:
+    ads = await db.fetchone("SELECT COUNT(*) n FROM ads WHERE owner_user_id=?", (user_id,))
+    campaigns = await db.fetchone(
+        "SELECT COUNT(*) n FROM campaigns WHERE owner_user_id=? AND status='active'", (user_id,)
+    )
+    chats = await db.fetchone(
+        "SELECT COUNT(*) n FROM chats WHERE owner_user_id=? AND is_active=1 AND bot_can_post=1", (user_id,)
+    )
+    sent = await db.fetchone(
+        """SELECT COUNT(*) n FROM deliveries d
+           JOIN campaigns c ON c.id=d.campaign_id
+           WHERE c.owner_user_id=? AND d.status='success'""", (user_id,)
+    )
+    return {
+        "ads": (ads or {}).get("n", 0),
+        "campaigns": (campaigns or {}).get("n", 0),
+        "chats": (chats or {}).get("n", 0),
+        "sent": (sent or {}).get("n", 0),
+    }
 
 async def admin_status(db, user_id: int, owner_id: int) -> bool:
     if user_id == owner_id:
@@ -23,6 +47,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     cfg = context.application.bot_data["config"]
     user = update.effective_user
     await db.upsert_user(user)
+
     if context.args and context.args[0].startswith("ref_"):
         try:
             referrer = int(context.args[0].split("_", 1)[1])
@@ -33,20 +58,71 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 )
         except ValueError:
             pass
+
+    lang = await get_language(db, user.id)
+    stats = await dashboard_stats(db, user.id)
     admin = await admin_status(db, user.id, cfg.owner_id)
-    text = (
-        f"🚀 <b>Advertisement Manager</b>\n\n"
-        f"Welcome, <b>{user.first_name}</b>!\n"
-        "Create, schedule and manage authorised Telegram advertisements professionally.\n\n"
-        "Choose an option below 👇"
-    )
+
+    if lang == "hi":
+        text = (
+            "╭━━━━━━━━━━━━━━━━━━━━╮\\n"
+            "   🚀 <b>PRACHARIKA CONTROL</b>\\n"
+            "╰━━━━━━━━━━━━━━━━━━━━╯\\n\\n"
+            f"नमस्ते <b>{user.first_name}</b> 👋\\n"
+            "आपका स्मार्ट Telegram विज्ञापन डैशबोर्ड तैयार है।\\n\\n"
+            "📌 <b>आज की स्थिति</b>\\n"
+            f"├ 📢 कुल विज्ञापन: <b>{stats['ads']}</b>\\n"
+            f"├ 🗓 सक्रिय अभियान: <b>{stats['campaigns']}</b>\\n"
+            f"├ 👥 जुड़े समूह/चैनल: <b>{stats['chats']}</b>\\n"
+            f"└ ✅ सफल पोस्ट: <b>{stats['sent']}</b>\\n\\n"
+            "नीचे से अपनी कार्रवाई चुनें 👇"
+        )
+    else:
+        text = (
+            "╭━━━━━━━━━━━━━━━━━━━━╮\\n"
+            "   🚀 <b>PRACHARIKA CONTROL</b>\\n"
+            "╰━━━━━━━━━━━━━━━━━━━━╯\\n\\n"
+            f"Welcome, <b>{user.first_name}</b> 👋\\n"
+            "Your smart Telegram advertising workspace is ready.\\n\\n"
+            "📌 <b>Account Overview</b>\\n"
+            f"├ 📢 Total advertisements: <b>{stats['ads']}</b>\\n"
+            f"├ 🗓 Active campaigns: <b>{stats['campaigns']}</b>\\n"
+            f"├ 👥 Connected chats: <b>{stats['chats']}</b>\\n"
+            f"└ ✅ Successful posts: <b>{stats['sent']}</b>\\n\\n"
+            "Choose an action below 👇"
+        )
+
     if update.callback_query:
         await update.callback_query.answer()
-        await update.callback_query.edit_message_text(text, parse_mode="HTML",
-                                                      reply_markup=dashboard_keyboard(admin))
+        await update.callback_query.edit_message_text(
+            text, parse_mode="HTML", reply_markup=dashboard_keyboard(admin, lang)
+        )
     else:
-        await update.effective_message.reply_text(text, parse_mode="HTML",
-                                                  reply_markup=dashboard_keyboard(admin))
+        await update.effective_message.reply_text(
+            text, parse_mode="HTML", reply_markup=dashboard_keyboard(admin, lang)
+        )
+
+async def language_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    db = context.application.bot_data["db"]
+    lang = await get_language(db, update.effective_user.id)
+    text = (
+        "🌐 <b>भाषा चुनें / Choose Language</b>\\n\\n"
+        "आप कभी भी अपनी पसंद की भाषा बदल सकते हैं।\\n"
+        "You can change your preferred language anytime."
+    )
+    await update.callback_query.answer()
+    await update.callback_query.edit_message_text(
+        text, parse_mode="HTML", reply_markup=language_keyboard(lang)
+    )
+
+async def set_language(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    db = context.application.bot_data["db"]
+    lang = update.callback_query.data.split(":", 1)[1]
+    if lang not in {"hi", "en"}:
+        lang = "en"
+    await db.execute("UPDATE users SET language=? WHERE user_id=?", (lang, update.effective_user.id))
+    await update.callback_query.answer("भाषा बदल दी गई ✅" if lang == "hi" else "Language updated ✅")
+    await start(update, context)
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.effective_message.reply_text(
