@@ -65,30 +65,30 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if lang == "hi":
         text = (
-            "╭━━━━━━━━━━━━━━━━━━━━╮\\n"
-            "   🚀 <b>PRACHARIKA CONTROL</b>\\n"
-            "╰━━━━━━━━━━━━━━━━━━━━╯\\n\\n"
-            f"नमस्ते <b>{user.first_name}</b> 👋\\n"
-            "आपका स्मार्ट Telegram विज्ञापन डैशबोर्ड तैयार है।\\n\\n"
-            "📌 <b>आज की स्थिति</b>\\n"
-            f"├ 📢 कुल विज्ञापन: <b>{stats['ads']}</b>\\n"
-            f"├ 🗓 सक्रिय अभियान: <b>{stats['campaigns']}</b>\\n"
-            f"├ 👥 जुड़े समूह/चैनल: <b>{stats['chats']}</b>\\n"
-            f"└ ✅ सफल पोस्ट: <b>{stats['sent']}</b>\\n\\n"
+            "╭━━━━━━━━━━━━━━━━━━━━╮\n"
+            "   🚀 <b>PRACHARIKA CONTROL</b>\n"
+            "╰━━━━━━━━━━━━━━━━━━━━╯\n\n"
+            f"नमस्ते <b>{user.first_name}</b> 👋\n"
+            "आपका स्मार्ट Telegram विज्ञापन डैशबोर्ड तैयार है।\n\n"
+            "📌 <b>आज की स्थिति</b>\n"
+            f"├ 📢 कुल विज्ञापन: <b>{stats['ads']}</b>\n"
+            f"├ 🗓 सक्रिय अभियान: <b>{stats['campaigns']}</b>\n"
+            f"├ 👥 जुड़े समूह/चैनल: <b>{stats['chats']}</b>\n"
+            f"└ ✅ सफल पोस्ट: <b>{stats['sent']}</b>\n\n"
             "नीचे से अपनी कार्रवाई चुनें 👇"
         )
     else:
         text = (
-            "╭━━━━━━━━━━━━━━━━━━━━╮\\n"
-            "   🚀 <b>PRACHARIKA CONTROL</b>\\n"
-            "╰━━━━━━━━━━━━━━━━━━━━╯\\n\\n"
-            f"Welcome, <b>{user.first_name}</b> 👋\\n"
-            "Your smart Telegram advertising workspace is ready.\\n\\n"
-            "📌 <b>Account Overview</b>\\n"
-            f"├ 📢 Total advertisements: <b>{stats['ads']}</b>\\n"
-            f"├ 🗓 Active campaigns: <b>{stats['campaigns']}</b>\\n"
-            f"├ 👥 Connected chats: <b>{stats['chats']}</b>\\n"
-            f"└ ✅ Successful posts: <b>{stats['sent']}</b>\\n\\n"
+            "╭━━━━━━━━━━━━━━━━━━━━╮\n"
+            "   🚀 <b>PRACHARIKA CONTROL</b>\n"
+            "╰━━━━━━━━━━━━━━━━━━━━╯\n\n"
+            f"Welcome, <b>{user.first_name}</b> 👋\n"
+            "Your smart Telegram advertising workspace is ready.\n\n"
+            "📌 <b>Account Overview</b>\n"
+            f"├ 📢 Total advertisements: <b>{stats['ads']}</b>\n"
+            f"├ 🗓 Active campaigns: <b>{stats['campaigns']}</b>\n"
+            f"├ 👥 Connected chats: <b>{stats['chats']}</b>\n"
+            f"└ ✅ Successful posts: <b>{stats['sent']}</b>\n\n"
             "Choose an action below 👇"
         )
 
@@ -106,8 +106,8 @@ async def language_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     db = context.application.bot_data["db"]
     lang = await get_language(db, update.effective_user.id)
     text = (
-        "🌐 <b>भाषा चुनें / Choose Language</b>\\n\\n"
-        "आप कभी भी अपनी पसंद की भाषा बदल सकते हैं।\\n"
+        "🌐 <b>भाषा चुनें / Choose Language</b>\n\n"
+        "आप कभी भी अपनी पसंद की भाषा बदल सकते हैं।\n"
         "You can change your preferred language anytime."
     )
     await update.callback_query.answer()
