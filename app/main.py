@@ -12,7 +12,7 @@ from .handlers import (
     new_ad_buttons, list_ads, view_ad, preview_ad, set_ad_status, duplicate_ad,
     delete_ad, new_campaign_start, campaign_interval, campaign_chat_selection,
     list_campaigns, toggle_campaign, list_chats, analytics, plans, admin_home,
-    owner_command, support, settings, cancel, noop, error_handler,
+    owner_command, support, settings, cancel, noop, error_handler, language_menu, set_language,
 )
 
 logging.basicConfig(
@@ -111,6 +111,8 @@ def build_app() -> Application:
     app.add_handler(CallbackQueryHandler(admin_home, pattern=r"^admin:home$"))
     app.add_handler(CallbackQueryHandler(settings, pattern=r"^settings$"))
     app.add_handler(CallbackQueryHandler(support, pattern=r"^support$"))
+    app.add_handler(CallbackQueryHandler(language_menu, pattern=r"^language$"))
+    app.add_handler(CallbackQueryHandler(set_language, pattern=r"^lang:(hi|en)$"))
     app.add_handler(CallbackQueryHandler(noop, pattern=r"^noop$"))
     app.add_error_handler(error_handler)
     return app
