@@ -16,7 +16,8 @@ CREATE TABLE IF NOT EXISTS users (
     trial_used INTEGER NOT NULL DEFAULT 0,
     referred_by INTEGER,
     created_at TEXT NOT NULL,
-    last_seen_at TEXT NOT NULL
+    last_seen_at TEXT NOT NULL,
+    language TEXT NOT NULL DEFAULT 'en'
 );
 
 CREATE TABLE IF NOT EXISTS admins (
@@ -160,6 +161,10 @@ class Database:
     async def init(self) -> None:
         async with aiosqlite.connect(self.path) as db:
             await db.executescript(SCHEMA)
+            try:
+                await db.execute("ALTER TABLE users ADD COLUMN language TEXT NOT NULL DEFAULT 'en'")
+            except Exception:
+                pass
             await db.commit()
 
     async def execute(self, sql: str, params: tuple = ()) -> int:
